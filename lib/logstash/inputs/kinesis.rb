@@ -87,8 +87,11 @@ class LogStash::Inputs::Kinesis < LogStash::Inputs::Base
   public
   def run(queue)
     @client.run do |message|
-      decorate(message)
-      queue << message
+      @codec.decode(message) do |event|
+        decorate(event)
+        event["stream"] = @stream if !event.include?("stream")
+        queue << event
+      end
     end
     finished
   end # def run
